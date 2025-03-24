@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlogVid - Blogs & Videos Platform</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>BlogVid</h1>
+        </div>
+        <nav>
+            <div class="nav-menu">
+                <div class="menu-icon" id="menu-toggle">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+                <div class="dropdown-menu" id="dropdown-menu">
+                    <ul>
+                        <li data-page="home" class="active"><i class="fas fa-home"></i> Home</li>
+                        <li data-page="blogs"><i class="fas fa-blog"></i> Blogs</li>
+                        <li data-page="videos"><i class="fas fa-video"></i> Videos</li>
+                        <li data-page="auth"><i class="fas fa-sign-in-alt"></i> <span id="auth-text">Sign In</span></li>
+                        <li data-page="contact"><i class="fas fa-envelope"></i> Contact Us</li>
+                        <li data-page="terms"><i class="fas fa-file-contract"></i> Terms & Policies</li>
+                        <li data-page="admin" id="admin-menu-item" style="display: none;"><i class="fas fa-user-shield"></i> Admin Panel</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="user-info">
+                <span id="user-welcome">Welcome, Guest</span>
+                <button id="logout-btn" style="display: none;">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Home/Dashboard Page -->
+        <section id="home" class="page active">
+            <div class="hero">
+                <h2>Welcome to BlogVid</h2>
+                <p>Your one-stop platform for informative blogs and engaging videos</p>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <i class="fas fa-eye"></i>
+                    <h3>Website Visits</h3>
+                    <p id="visit-count">0</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-blog"></i>
+                    <h3>Blog Articles</h3>
+                    <p id="blog-count">0</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-video"></i>
+                    <h3>Videos</h3>
+                    <p id="video-count">0</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-users"></i>
+                    <h3>Community Members</h3>
+                    <p id="user-count">0</p>
+                </div>
+            </div>
+            
+            <div class="featured-content">
+                <h2>Featured Content</h2>
+                <div class="featured-container">
+                    <div class="featured-blogs">
+                        <h3>Latest Blogs</h3>
+                        <div id="featured-blogs-container" class="featured-items">
+                            <!-- Featured blogs will be loaded here dynamically -->
+                            <p class="empty-state">No blogs available yet</p>
+                        </div>
+                    </div>
+                    
+                    <div class="featured-videos">
+                        <h3>Latest Videos</h3>
+                        <div id="featured-videos-container" class="featured-items">
+                            <!-- Featured videos will be loaded here dynamically -->
+                            <p class="empty-state">No videos available yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="about-section">
+                <h2>About BlogVid</h2>
+                <p>BlogVid is a platform dedicated to sharing knowledge and information through engaging blogs and videos. Our mission is to create a space where readers and viewers can discover new ideas, learn new skills, and stay updated with the latest trends.</p>
+                <p>Join our community today to get access to premium content and interact with fellow knowledge seekers!</p>
+            </div>
+        </section>
+
+        <!-- Blogs Page -->
+        <section id="blogs" class="page">
+            <h2>Blog Articles</h2>
+            
+            <div id="admin-blog-controls" class="admin-controls" style="display: none;">
+                <h3>Admin Controls</h3>
+                <button id="new-blog-btn" class="admin-btn"><i class="fas fa-plus"></i> Add New Blog</button>
+                
+                <div id="blog-form-container" class="form-container" style="display: none;">
+                    <form id="blog-form">
+                        <div class="form-group">
+                            <label for="blog-title">Blog Title</label>
+                            <input type="text" id="blog-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="blog-author">Author</label>
+                            <input type="text" id="blog-author" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="blog-content">Content</label>
+                            <textarea id="blog-content" rows="10" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="blog-image-url">Image URL (optional)</label>
+                            <input type="text" id="blog-image-url">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="save-btn">Save Blog</button>
+                            <button type="button" class="cancel-btn" id="cancel-blog-btn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div id="blogs-container" class="blogs-container">
+                <!-- Blogs will be loaded here dynamically -->
+                <p class="empty-state">No blogs available yet</p>
+            </div>
+            
+            <div id="blog-detail" class="blog-detail" style="display: none;">
+                <button class="back-btn" id="back-to-blogs-btn"><i class="fas fa-arrow-left"></i> Back to Blogs</button>
+                <div id="blog-detail-content"></div>
+                
+                <div class="comments-section">
+                    <h3>Comments</h3>
+                    <div class="comment-form">
+                        <textarea id="blog-comment-text" placeholder="Write your comment here..."></textarea>
+                        <button id="submit-blog-comment" class="comment-btn">Submit Comment</button>
+                    </div>
+                    <div id="blog-comments-container" class="comments-container">
+                        <!-- Comments will be loaded here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Videos Page -->
+        <section id="videos" class="page">
+            <h2>Videos</h2>
+            
+            <div id="admin-video-controls" class="admin-controls" style="display: none;">
+                <h3>Admin Controls</h3>
+                <button id="new-video-btn" class="admin-btn"><i class="fas fa-plus"></i> Add New Video</button>
+                
+                <div id="video-form-container" class="form-container" style="display: none;">
+                    <form id="video-form">
+                        <div class="form-group">
+                            <label for="video-title">Video Title</label>
+                            <input type="text" id="video-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="video-description">Description</label>
+                            <textarea id="video-description" rows="4" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="video-url">Video URL (YouTube or direct link)</label>
+                            <input type="text" id="video-url" required>
+                            <small>For YouTube videos, use the embed link (https://www.youtube.com/embed/VIDEO_ID)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="video-thumbnail">Thumbnail URL (optional)</label>
+                            <input type="text" id="video-thumbnail">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="save-btn">Save Video</button>
+                            <button type="button" class="cancel-btn" id="cancel-video-btn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div id="videos-container" class="videos-container">
+                <!-- Videos will be loaded here dynamically -->
+                <p class="empty-state">No videos available yet</p>
+            </div>
+            
+            <div id="video-detail" class="video-detail" style="display: none;">
+                <button class="back-btn" id="back-to-videos-btn"><i class="fas fa-arrow-left"></i> Back to Videos</button>
+                <div id="video-detail-content"></div>
+                
+                <div class="video-actions">
+                    <button id="download-video-btn" class="action-btn"><i class="fas fa-download"></i> Download</button>
+                </div>
+                
+                <div class="comments-section">
+                    <h3>Comments</h3>
+                    <div class="comment-form">
+                        <textarea id="video-comment-text" placeholder="Write your comment here..."></textarea>
+                        <button id="submit-video-comment" class="comment-btn">Submit Comment</button>
+                    </div>
+                    <div id="video-comments-container" class="comments-container">
+                        <!-- Comments will be loaded here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Authentication Page -->
+        <section id="auth" class="page">
+            <div class="auth-container">
+                <div class="auth-tabs">
+                    <div class="tab active" data-tab="signin">Sign In</div>
+                    <div class="tab" data-tab="signup">Sign Up</div>
+                </div>
+                
+                <div id="signin-form" class="auth-form active">
+                    <h2>Sign In</h2>
+                    <div class="form-group">
+                        <label for="signin-email">Email</label>
+                        <input type="email" id="signin-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signin-password">Password</label>
+                        <input type="password" id="signin-password" required>
+                    </div>
+                    <button id="signin-btn" class="auth-btn">Sign In</button>
+                    <p class="auth-message" id="signin-message"></p>
+                </div>
+                
+                <div id="signup-form" class="auth-form">
+                    <h2>Sign Up</h2>
+                    <div class="form-group">
+                        <label for="signup-username">Username</label>
+                        <input type="text" id="signup-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email</label>
+                        <input type="email" id="signup-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-confirm">Confirm Password</label>
+                        <input type="password" id="signup-confirm" required>
+                    </div>
+                    <button id="signup-btn" class="auth-btn">Sign Up</button>
+                    <p class="auth-message" id="signup-message"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Us Page -->
+        <section id="contact" class="page">
+            <h2>Contact Us</h2>
+            <div class="contact-container">
+                <div class="contact-info">
+                    <h3>Get in Touch</h3>
+                    <p>Have questions, suggestions, or feedback? We'd love to hear from you! Fill out the form, and we'll get back to you as soon as possible.</p>
+                    
+                    <div class="contact-method">
+                        <i class="fas fa-envelope"></i>
+                        <span>contact@blogvid.com</span>
+                    </div>
+                    <div class="contact-method">
+                        <i class="fas fa-phone"></i>
+                        <span>+1 (555) 123-4567</span>
+                    </div>
+                    <div class="contact-method">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>123 Content Street, Digital City</span>
+                    </div>
+                    
+                    <div class="social-links">
+                        <a href="#" class="social-link"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="contact-form">
+                    <h3>Send Us a Message</h3>
+                    <form id="contact-form">
+                        <div class="form-group">
+                            <label for="contact-name">Name</label>
+                            <input type="text" id="contact-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-email">Email</label>
+                            <input type="email" id="contact-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-subject">Subject</label>
+                            <input type="text" id="contact-subject" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-message">Message</label>
+                            <textarea id="contact-message" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">Send Message</button>
+                    </form>
+                    <p id="contact-response" class="response-message"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Terms and Policies Page -->
+        <section id="terms" class="page">
+            <h2>Terms and Policies</h2>
+            <div class="terms-container">
+                <div class="terms-navigation">
+                    <ul>
+                        <li><a href="#terms-of-service">Terms of Service</a></li>
+                        <li><a href="#privacy-policy">Privacy Policy</a></li>
+                        <li><a href="#content-policy">Content Policy</a></li>
+                        <li><a href="#copyright">Copyright Policy</a></li>
+                    </ul>
+                </div>
+                
+                <div class="terms-content">
+                    <div id="terms-of-service" class="terms-section">
+                        <h3>Terms of Service</h3>
+                        <p>Last updated: June 1, 2023</p>
+                        
+                        <h4>1. Acceptance of Terms</h4>
+                        <p>By accessing or using BlogVid, you agree to comply with and be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.</p>
+                        
+                        <h4>2. Changes to Terms</h4>
+                        <p>We reserve the right to modify these terms at any time. Your continued use of BlogVid after such changes constitutes your acceptance of the new terms.</p>
+                        
+                        <h4>3. User Accounts</h4>
+                        <p>When you create an account with us, you must provide accurate, complete, and up-to-date information. You are responsible for safeguarding the password and for all activities that occur under your account.</p>
+                        
+                        <h4>4. Content</h4>
+                        <p>Our platform allows users to view blogs and videos. All content is either owned by us or has been licensed for use. Users may not download, copy, or use any content in violation of these terms.</p>
+                    </div>
+                    
+                    <div id="privacy-policy" class="terms-section">
+                        <h3>Privacy Policy</h3>
+                        <p>Last updated: June 1, 2023</p>
+                        
+                        <h4>1. Information We Collect</h4>
+                        <p>We collect information you provide directly to us, such as when you create an account, update your profile, or comment on content. This includes your name, email address, and any other information you choose to provide.</p>
+                        
+                        <h4>2. How We Use Information</h4>
+                        <p>We use the information we collect to provide, maintain, and improve our services, to communicate with you, and to protect our services and users.</p>
+                        
+                        <h4>3. Information Sharing</h4>
+                        <p>We do not share your personal information with third parties except as described in this privacy policy or with your consent.</p>
+                        
+                        <h4>4. Data Security</h4>
+                        <p>We take reasonable measures to help protect your personal information from loss, theft, misuse, and unauthorized access, disclosure, alteration, and destruction.</p>
+                    </div>
+                    
+                    <div id="content-policy" class="terms-section">
+                        <h3>Content Policy</h3>
+                        <p>Last updated: June 1, 2023</p>
+                        
+                        <h4>1. Acceptable Content</h4>
+                        <p>All content on BlogVid must comply with our policies. We do not allow content that is illegal, harmful, threatening, abusive, harassing, tortious, defamatory, vulgar, obscene, libelous, or otherwise objectionable.</p>
+                        
+                        <h4>2. User Contributions</h4>
+                        <p>Users may contribute comments on blogs and videos. All user contributions must comply with our content policy.</p>
+                        
+                        <h4>3. Reporting Violations</h4>
+                        <p>If you find content that violates our policies, please report it through our contact page.</p>
+                    </div>
+                    
+                    <div id="copyright" class="terms-section">
+                        <h3>Copyright Policy</h3>
+                        <p>Last updated: June 1, 2023</p>
+                        
+                        <h4>1. Digital Millennium Copyright Act</h4>
+                        <p>We respect the intellectual property rights of others and expect our users to do the same. In accordance with the Digital Millennium Copyright Act (DMCA), we will respond to notices of alleged copyright infringement.</p>
+                        
+                        <h4>2. Notice and Procedure</h4>
+                        <p>If you believe that your work has been copied in a way that constitutes copyright infringement, please provide us with a written notice containing the information specified by the DMCA.</p>
+                        
+                        <h4>3. Counter-Notice</h4>
+                        <p>If material you posted has been removed due to a copyright complaint, you may file a counter-notice if you believe the removal was a mistake or misidentification.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Panel -->
+        <section id="admin" class="page">
+            <h2>Admin Panel</h2>
+            <div class="admin-panel-container">
+                <div class="admin-sidebar">
+                    <ul>
+                        <li data-admin-tab="dashboard" class="active">Dashboard</li>
+                        <li data-admin-tab="blogs-management">Manage Blogs</li>
+                        <li data-admin-tab="videos-management">Manage Videos</li>
+                        <li data-admin-tab="comments-management">Manage Comments</li>
+                        <li data-admin-tab="settings">Website Settings</li>
+                    </ul>
+                </div>
+                
+                <div class="admin-content">
+                    <!-- Admin Dashboard -->
+                    <div id="admin-dashboard" class="admin-tab active">
+                        <h3>Admin Dashboard</h3>
+                        <div class="admin-stats">
+                            <div class="admin-stat-card">
+                                <h4>Total Blogs</h4>
+                                <p id="admin-blog-count">0</p>
+                            </div>
+                            <div class="admin-stat-card">
+                                <h4>Total Videos</h4>
+                                <p id="admin-video-count">0</p>
+                            </div>
+                            <div class="admin-stat-card">
+                                <h4>Total Comments</h4>
+                                <p id="admin-comment-count">0</p>
+                            </div>
+                            <div class="admin-stat-card">
+                                <h4>Total Users</h4>
+                                <p id="admin-user-count">0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="recent-activity">
+                            <h4>Recent Activity</h4>
+                            <div id="activity-log" class="activity-log">
+                                <!-- Activity log will be populated dynamically -->
+                                <p class="empty-state">No recent activity</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Blogs Management -->
+                    <div id="blogs-management" class="admin-tab">
+                        <h3>Manage Blogs</h3>
+                        <button id="admin-new-blog-btn" class="admin-btn"><i class="fas fa-plus"></i> Add New Blog</button>
+                        
+                        <div class="admin-table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Author</th>
+                                        <th>Date</th>
+                                        <th>Comments</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-blogs-table">
+                                    <!-- Blog entries will be populated dynamically -->
+                                    <tr>
+                                        <td colspan="5" class="empty-state">No blogs available</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Videos Management -->
+                    <div id="videos-management" class="admin-tab">
+                        <h3>Manage Videos</h3>
+                        <button id="admin-new-video-btn" class="admin-btn"><i class="fas fa-plus"></i> Add New Video</button>
+                        
+                        <div class="admin-table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Date</th>
+                                        <th>Comments</th>
+                                        <th>Views</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-videos-table">
+                                    <!-- Video entries will be populated dynamically -->
+                                    <tr>
+                                        <td colspan="5" class="empty-state">No videos available</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Comments Management -->
+                    <div id="comments-management" class="admin-tab">
+                        <h3>Manage Comments</h3>
+                        
+                        <div class="admin-table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Content</th>
+                                        <th>User</th>
+                                        <th>Date</th>
+                                        <th>On</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-comments-table">
+                                    <!-- Comment entries will be populated dynamically -->
+                                    <tr>
+                                        <td colspan="5" class="empty-state">No comments available</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Website Settings -->
+                    <div id="settings" class="admin-tab">
+                        <h3>Website Settings</h3>
+                        
+                        <form id="website-settings-form">
+                            <div class="settings-section">
+                                <h4>General Settings</h4>
+                                <div class="form-group">
+                                    <label for="website-title">Website Title</label>
+                                    <input type="text" id="website-title" value="BlogVid">
+                                </div>
+                                <div class="form-group">
+                                    <label for="website-description">Website Description</label>
+                                    <textarea id="website-description" rows="3">Your one-stop platform for informative blogs and engaging videos</textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-section">
+                                <h4>Homepage Settings</h4>
+                                <div class="form-group">
+                                    <label for="featured-blogs-count">Number of Featured Blogs</label>
+                                    <input type="number" id="featured-blogs-count" min="1" max="10" value="3">
+                                </div>
+                                <div class="form-group">
+                                    <label for="featured-videos-count">Number of Featured Videos</label>
+                                    <input type="number" id="featured-videos-count" min="1" max="10" value="3">
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="save-btn">Save Settings</button>
+                                <button type="button" class="reset-btn">Reset to Defaults</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-logo">
+                <h2>BlogVid</h2>
+                <p>Your one-stop platform for informative blogs and engaging videos</p>
+            </div>
+            
+            <div class="footer-links">
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="#" data-page="home">Home</a></li>
+                        <li><a href="#" data-page="blogs">Blogs</a></li>
+                        <li><a href="#" data-page="videos">Videos</a></li>
+                        <li><a href="#" data-page="contact">Contact Us</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Legal</h3>
+                    <ul>
+                        <li><a href="#" data-page="terms">Terms of Service</a></li>
+                        <li><a href="#" data-page="terms">Privacy Policy</a></li>
+                        <li><a href="#" data-page="terms">Content Policy</a></li>
+                        <li><a href="#" data-page="terms">Copyright</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Connect With Us</h3>
+                    <div class="social-links">
+                        <a href="#" class="social-link"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2023 BlogVid. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/blog.js"></script>
+    <script src="js/video.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
